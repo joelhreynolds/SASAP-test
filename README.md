@@ -11,5 +11,5 @@ And not really that interesting in the short term, but important in the long ter
  - and another
  ...
  
- Think about adding things you don't want to track into the .gitignore so that don't obscure git pane.
+ Think about adding things you don't want to track into the .gitignore so that don't obscure git pane in Rstudio.
 
