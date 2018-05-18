@@ -1,0 +1,84 @@
+---
+title: "Data Tidying"
+author: "Joel H. Reynolds"
+date: "5/17/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Libraries, echo=FALSE}
+library(dplyr)
+library(tidyr)
+library(lattice)
+```
+
+Read in data from KNB [here](https://knb.ecoinformatics.org/#view/df35b.304.2)
+```{r GetData, echo=FALSE}
+#reads in data from knb
+catch_df <- read.csv(url("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.302.1", method = "libcurl"),
+                    stringsAsFactors = FALSE)
+```
+some graphics
+```{r SimplePlots, echo=FALSE, eval=FALSE}
+xyplot(Chinook~Year|Region, data= catch_df,scales="free")
+xyplot(Sockeye~Year|Region, data= catch_df,scales="free")
+xyplot(Coho~Year|Region, data= catch_df,scales="free")
+xyplot(Pink~Year|Region, data= catch_df,scales="free")
+xyplot(Chum~Year|Region, data= catch_df,scales="free")
+
+```
+
+Clean up the data (tidy it).
+```{r TidyData_Pipes, echo=FALSE}
+
+catch_df <- catch_df %>% #pipe data into select
+  select(Region, Year, Chinook, Sockeye, Coho, Pink, Chum) %>% # now convert wide to long
+  gather(key="Species", value="Catch", -Region, -Year) %>% 
+  #have to ignore Region and Year and just deal on other columns
+  rename(catch_thousands=Catch) # Commercial Catch is in thousands 
+```
+
+```{r Tidy_Spread, echo=FALSE, eval=FALSE}
+# to go long to wide
+catch_df %>%
+  spread(key="Species", value = "Catch") %>%
+  head()
+```
+
+
+Add columns after correcting error in catch column.
+```{r, echo=FALSE}
+# there is an error in the dataset due to the optical character recognition - a '1' got read in as an 'I'.
+# did some exploration to resolve problem but this final code does the error correction explicitly so reproducible.
+catch_df <- catch_df %>%
+  mutate(catch_thousands=ifelse(catch_thousands == "I", 1, catch_thousands)) %>%
+  mutate(catch_thousands = as.integer(catch_thousands)) %>%
+  mutate(Catch=catch_thousands*1000)  
+```
+
+
+
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
