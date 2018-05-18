@@ -73,24 +73,25 @@ annual_catch <- catch_df %>%
 ```
 
 
+# Joins
+Some practice with normalized tables and lookup tables.
 
+```{r JoinsData, echo=FALSE}
 
-## R Markdown
+region_defs <- read.csv(url("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/df35b.303.1", method = "libcurl"),
+                        stringsAsFactors = FALSE)
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+# extract columns we want to deal with
+region_defs <- region_defs %>%
+  select(code, mgmtArea) %>%
+  rename(Region=code, Region_Name = mgmtArea)
 ```
 
-## Including Plots
+```{r Joins, echo=FALSE}
+catch_joined_df <- left_join(catch_df, region_defs,by= c("Region"="Region"))
 
-You can also embed plots, for example:
+head(catch_joined_df)
+# important to do some QA/QC to make sure column sums match between pre-join and post-join to ensure that 
+# no weird errors resulting in duplicate rows or dropping of rows in joins.
 
-```{r pressure, echo=FALSE}
-plot(pressure)
 ```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
