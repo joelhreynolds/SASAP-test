@@ -59,6 +59,18 @@ catch_df <- catch_df %>%
   mutate(Catch=catch_thousands*1000)  
 ```
 
+# Analysis
+
+```{r Grouping, echo=FALSE}
+
+annual_catch <- catch_df %>%
+  filter(Species=="Chinook") %>%
+  group_by(Region, Year) %>%
+  summarize(mean_catch = mean(Catch), num_obs=n()) %>%
+  arrange(desc(mean_catch))  #arrange by descencing order
+
+  head(annual_catch, 30)
+```
 
 
 
