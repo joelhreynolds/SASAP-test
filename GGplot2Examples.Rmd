@@ -1,0 +1,145 @@
+---
+title: "GGplot2 Lesson"
+author: "Joel H. Reynolds"
+date: "5/18/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Install libraries
+```{r, echo=FALSE}
+suppressPackageStartupMessages({
+  library(ggplot2)
+  library(tidyr)
+  library(dplyr)
+})
+```
+
+Get the data
+```{r Grab_Data, echo=FALSE}
+# https://knb.ecoinformatics.org/#view/urn:uuid:e05865d7-678d-4513-9061-2ab7d979f8e7
+# Search 'permit value'
+permits <- read.csv(url("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Aa3c58bd6-481e-4c64-aa93-795df10a4664", method = "libcurl"),
+                    stringsAsFactors = FALSE)
+```
+
+
+Various plots
+```{r GGplot_Examples,echo=FALSE}
+
+ggplot(permits, aes(x=Value, y=StdDev, color = Gear, size=Range)) +  # aes MAPS data to the geometry, e.g., what will x be for all following layers, y, ranges and aspect ratios, etc. Every mapping gets passed to allow sublayers.
+  geom_point(color="blue") # SETTING all points same (overrides mapping, thus eliminating need to Gear legend) 
+
+  
+ggplot(permits, aes(x=Value, y=StdDev, color = Gear, size=Range)) +  
+  geom_point() +
+  # scale_color_manual(values=c("red", "orange", "yellow", "green", "blue", "purple", "violet")) # ROYGBIV
+  scale_color_brewer(palette="Paired") +
+  scale_x_log10()
+
+
+ggplot(permits, aes(x=Value, y=StdDev, color = Gear)) +  
+  geom_point() +
+  # scale_color_manual(values=c("red", "orange", "yellow", "green", "blue", "purple", "violet")) # ROYGBIV
+  theme(legend.position="bottom")
+
+
+
+# could put Set Net on top by sorting data
+
+ggplot(permits, aes(Value)) + # redefine aes since expecting just a single variable
+  geom_histogram(binwidth = 1e4)
+
+ggplot(permits, aes(Gear)) + # redefine aes since expecting just a single variable
+  geom_bar()
+
+ggplot(permits, aes(x=Gear, y=Value))+
+  geom_boxplot()
+
+ggplot(permits, aes(x=Gear, y=Value))+
+  geom_violin(aes(Gear,log(Value)))
+
+permits_ci <- permits %>%
+  filter(Region== "Cook Inlet")
+
+ggplot(permits_ci, aes(x=Gear, y=Value))+
+  geom_violin() +
+  geom_point(position = "jitter", shape=1)
+
+
+ggplot(permits, aes(Value, StdDev, color = Gear)) +
+  geom_point() +
+  theme_classic() +
+  theme(legend.position = c(1, 1),
+        legend.justification = c(1,1),
+        legend.direction = "horizontal",
+        legend.title = element_blank()) +
+  xlab("Permit Value (unadjusted USD)") +
+  ylab("Permit Std. Dev. (unadjusted USD)") +
+  ggtitle("Permit Standard Deviation against Permit Value by Gear Type",
+          "or: I wish I owned a seine permit")
+
+```
+
+Play with other layer functions
+```{r echo=FALSE}
+ggplot(permits_ci, aes(x=Value, y=StdDev))+
+  geom_smooth(method="loess") +
+  geom_point()
+
+
+permits_ns <- permits %>%
+  filter(Gear == "Set Net", Region=="Norton Sound")
+
+permits_se_seine <- permits %>%
+  filter(Gear == "Purse Seine", Region=="Southeast")
+
+ggplot(permits_se_seine, aes(x=Year, y=Value)) + 
+  geom_point() +
+  geom_line() +
+  scale_y_continuous(limits=c(0,max(permits_se_seine$Value)))+
+  scale_x_continuous(limits=c(2000, max(permits_se_seine$Year)))
+
+
+ggplot(permits_ns, aes(x=))
+```
+
+
+More examples - quick EDA w/ pipes
+```{r echo=FALSE}
+
+permits %>%
+  group_by(Gear) %>% 
+  summarize(meanval = mean(Value, na.rm = TRUE)) %>% 
+  ggplot(aes(x=Gear, y = meanval/sum(meanval))) +
+  geom_col() +
+  scale_x_discrete(labels = sort(unique(permits$Gear)))+
+  scale_y_continuous(name="Percent of Total")
+
+permits %>%
+  group_by(Gear) %>% 
+  ggplot(aes(x=Value, color = Gear)) +
+  stat_ecdf() +
+  scale_y_continuous(name="Percent of permits with Value less than or equal to...")
+```
+
+
+
+```{r echo=FALSE}
+
+# can establish and save themes so can scale up for consistent plots across multiple data sets.
+my_theme <- theme(axis.title = element_text(size=16), axis.text = element_text(size=12))
+colors_I_used<- scale_color_brewer(palette="YlGnBu",direction=-1)
+
+
+ggplot(permits%>%filter(Region=="Bristol Bay"), aes(x=Year, y=Value, color=Gear)) + 
+  geom_point() +
+  geom_line() +
+  labs(y="Permit Value", title="Bristol Bay Permit Value")+
+  scale_x_continuous(breaks =c(1990, 2010)) +
+  facet_wrap(~Gear,ncol=1) +
+  my_theme +
+  colors_I_used
+```
